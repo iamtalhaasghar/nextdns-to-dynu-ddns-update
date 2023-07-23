@@ -2,7 +2,8 @@
 import os, requests
 from dotenv import load_dotenv
 
-if not load_dotenv():
+env_path = '/data/data/com.termux/files/home/storage/projects/nextdns-to-dynu-ddns-update/.env'
+if not load_dotenv(env_path):
     print("ERR: Couldn't load .env file!")
     exit()
 
