@@ -26,8 +26,9 @@ cache_path = os.path.join(os.path.expanduser('~'), 'dynu.txt')
 if os.path.isfile(cache_path):
     old_ip = open(cache_path).read()
     if old_ip == client_ip:
-        requests.post(ntfy_url, json='no changes')
-        print("no change")
+        msg = f'{os.getlogin()}: no changes'
+        requests.post(ntfy_url, json=msg)
+        print(msg)
         exit()
 
 #print(f'Setting ddns ip to: {client_ip}')
@@ -58,7 +59,7 @@ data = {
 
 response = requests.post(url, headers=headers, json=data)
 if response.status_code == 200:
-    msg = f"new ip: *.{client_ip.split('.')[-1]}"
+    msg = f"{os.getlogin()}: new ip is *.{client_ip.split('.')[-1]}"
     requests.post(ntfy_url, headers={'Priority': 'high'}, json=msg)
     print(msg)
 else:
