@@ -1,5 +1,7 @@
+#!/data/data/com.termux/files/home/.local/share/virtualenvs/nextdns-to-dynu-ddns-update-H6J607G5/bin/python
 
 import os, requests
+from datetime import datetime
 from dotenv import load_dotenv
 
 env_path = '/data/data/com.termux/files/home/storage/projects/nextdns-to-dynu-ddns-update/.env'
@@ -19,7 +21,15 @@ data = response.json()
 # Extract client IP from the log entry
 client_ip = data["data"][0]["clientIp"]
 
-print(f'Setting ddns ip to: {client_ip}')
+cache_path = os.path.join(os.path.expanduser('~'), 'dynu.txt')
+if os.path.isfile(cache_path):
+    old_ip = open(cache_path).read()
+    if old_ip == client_ip:
+        print("no change")
+        exit()
+
+#print(f'Setting ddns ip to: {client_ip}')
+open(cache_path, 'w').write(client_ip)
 
 dynu_api_key = os.getenv("DYNU_API_KEY")
 dynu_dns_id = os.getenv("DYNU_DNS_ID")
@@ -45,7 +55,8 @@ data = {
 }
 
 response = requests.post(url, headers=headers, json=data)
-
-print(f'Finished Request with:', response.status_code)
-print(response.json())
+if response.status_code == 200:
+    print(f"ip changed to *.{client_ip.split('.')[-1]}")
+else:
+    print(response.status_code, response.json())
 
