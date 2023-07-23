@@ -9,6 +9,7 @@ if not load_dotenv(env_path):
     print("ERR: Couldn't load .env file!")
     exit()
 
+ntfy_url = os.getenv('NTFY_URL')
 # Fetch latest log entry from NextDNS analytics
 nextdns_api_key = os.getenv("NEXT_DNS_API_KEY")
 
@@ -25,6 +26,7 @@ cache_path = os.path.join(os.path.expanduser('~'), 'dynu.txt')
 if os.path.isfile(cache_path):
     old_ip = open(cache_path).read()
     if old_ip == client_ip:
+        requests.post(ntfy_url, json='no changes')
         print("no change")
         exit()
 
@@ -56,7 +58,9 @@ data = {
 
 response = requests.post(url, headers=headers, json=data)
 if response.status_code == 200:
-    print(f"ip changed to *.{client_ip.split('.')[-1]}")
+    msg = f"new ip: *.{client_ip.split('.')[-1]}"
+    requests.post(ntfy_url, headers={'Priority': 'high'}, json=msg)
+    print(msg)
 else:
     print(response.status_code, response.json())
 
