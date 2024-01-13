@@ -1,11 +1,16 @@
-
 import os, requests
+from datetime import datetime
 from dotenv import load_dotenv
+import sys
+from redis import Redis
 
-if not load_dotenv('/home/programmer/projects/nextdns-to-dynu-ddns-update/.env'):
+if not load_dotenv(sys.argv[1]):
     print("ERR: Couldn't load .env file!")
     exit()
 
+rdb = Redis()
+
+ntfy_url = os.getenv('NTFY_URL')
 # Fetch latest log entry from NextDNS analytics
 nextdns_api_key = os.getenv("NEXT_DNS_API_KEY")
 
@@ -18,8 +23,16 @@ data = response.json()
 # Extract client IP from the log entry
 client_ip = data["data"][0]["clientIp"]
 
-print(f'Setting ddns ip to: {client_ip}')
+rkey = '/nextdns/ip'
+old_ip = rdb.get(rkey)
+if old_ip == client_ip:
+    msg = f'{os.getlogin()}: no changes'
+    requests.post(ntfy_url, json=msg)
+    print(msg)
+    exit()
 
+print(f'Setting ddns ip to: {client_ip}')
+rdb.set(rkey, client_ip)
 dynu_api_key = os.getenv("DYNU_API_KEY")
 dynu_dns_id = os.getenv("DYNU_DNS_ID")
 dynu_dns_url = os.getenv("DYNU_DNS_URL")
@@ -44,7 +57,10 @@ data = {
 }
 
 response = requests.post(url, headers=headers, json=data)
-
-print(f'Finished Request with:', response.status_code)
-print(response.json())
+if response.status_code == 200:
+    msg = f"{os.getlogin()}: new ip is *.{client_ip.split('.')[-1]}"
+    requests.post(ntfy_url, headers={'Priority': 'high'}, json=msg)
+    print(msg)
+else:
+    print(response.status_code, response.json())
 
