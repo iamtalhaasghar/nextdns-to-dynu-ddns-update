@@ -2,7 +2,7 @@
 import os, requests
 from dotenv import load_dotenv
 
-if not load_dotenv():
+if not load_dotenv('/home/programmer/projects/nextdns-to-dynu-ddns-update/.env'):
     print("ERR: Couldn't load .env file!")
     exit()
 
